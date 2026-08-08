@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../lib/supabaseClient';
 
+const ensureSupabase = () => {
+  if (!supabase) {
+    return { configured: false, error: 'Supabase is not configured for this environment.' };
+  }
+
+  return { configured: true };
+};
+
 export const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -15,6 +23,12 @@ export const useAuthStore = create(
 
       // Initialize auth state
       initAuth: async () => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, isAuthenticated: false, user: null, session: null, role: null, isVerified: false, error: null });
+          return;
+        }
+
         set({ loading: true });
         try {
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -64,6 +78,12 @@ export const useAuthStore = create(
 
       // Register with full validation
       register: async (email, password, fullName, companyName) => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, error: authGuard.error });
+          return { success: false, error: authGuard.error };
+        }
+
         set({ loading: true, error: null });
         try {
           if (!email || !password || !fullName || !companyName) {
@@ -132,6 +152,12 @@ export const useAuthStore = create(
 
       // Login with full validation
       login: async (email, password) => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, error: authGuard.error, isAuthenticated: false });
+          return { success: false, error: authGuard.error };
+        }
+
         set({ loading: true, error: null });
         try {
           if (!email || !password) {
@@ -177,6 +203,12 @@ export const useAuthStore = create(
 
       // Logout
       logout: async () => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, user: null, session: null, role: null, isVerified: false, isAuthenticated: false, error: null });
+          return { success: true };
+        }
+
         set({ loading: true });
         try {
           const { error } = await supabase.auth.signOut();
@@ -203,6 +235,12 @@ export const useAuthStore = create(
 
       // Verify OTP with full validation
       verifyOTP: async (email, otp) => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, error: authGuard.error });
+          return { success: false, error: authGuard.error };
+        }
+
         set({ loading: true, error: null });
         try {
           if (!email || !otp) {
@@ -264,6 +302,12 @@ export const useAuthStore = create(
 
       // Send OTP with error handling
       sendOTP: async (email) => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, error: authGuard.error });
+          return { success: false, error: authGuard.error };
+        }
+
         set({ loading: true, error: null });
         try {
           if (!email) {
@@ -295,6 +339,12 @@ export const useAuthStore = create(
 
       // Update user
       updateUser: async (updates) => {
+        const authGuard = ensureSupabase();
+        if (!authGuard.configured) {
+          set({ loading: false, error: authGuard.error });
+          return { success: false, error: authGuard.error };
+        }
+
         set({ loading: true });
         try {
           if (!get().user?.id) {

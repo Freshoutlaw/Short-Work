@@ -1,8 +1,13 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { isSupabaseConfigured } from '../../lib/supabaseClient';
 
 export const ProtectedRoute = ({ children, requireVerified = false, requireAdmin = false }) => {
   const { isAuthenticated, isVerified, role, loading } = useAuthStore();
+
+  if (!isSupabaseConfigured) {
+    return children;
+  }
 
   if (loading) {
     return (
